@@ -1,0 +1,155 @@
+<style>
+  .rig-widget {
+    font-family: Arial, sans-serif;
+    max-width: 850px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #f4f6f8;
+    text-align: center;
+  }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: #111;
+    border: 2px solid #444;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .rig-btn {
+    padding: 10px 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #fff;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .rig-btn:hover { background-color: #e3f2fd; }
+  .rig-btn.active { background-color: #1976d2; color: white; border-color: #1565c0; }
+
+  .description-box {
+    background: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    color: #333;
+    text-align: left;
+    min-height: 80px;
+    line-height: 1.4;
+  }
+
+  /* Interactive arm bending simulation */
+  .animating-arm {
+    animation: bendArm 3s infinite ease-in-out alternate;
+    transform-origin: 150px 120px;
+  }
+  @keyframes bendArm {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-55deg); }
+  }
+</style>
+
+<div class="rig-widget">
+  <h2>Rigging & Weight Painting Studio</h2>
+  <p>Explore how a digital skeleton, weight painting, and external controllers bring a lifeless mesh to life.</p>
+
+  <div class="stage" id="rigStage">
+    <!-- Rendered dynamically via JS -->
+  </div>
+
+  <div class="nav-grid">
+    <button class="rig-btn active" onclick="setRigMode('skeleton')">1. Skeleton & Joints</button>
+    <button class="rig-btn" onclick="setRigMode('weights')">2. Skinning & Weight Painting</button>
+    <button class="rig-btn" onclick="setRigMode('controllers')">3. Animation Controllers</button>
+  </div>
+
+  <div class="description-box" id="rigDesc">
+    <strong>The Skeleton & Joints:</strong> Technical directors insert internal digital bones and joints (shoulder, elbow, wrist) inside the mesh to establish anatomical articulation.
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('rigStage');
+  const desc = document.getElementById('rigDesc');
+  const buttons = document.querySelectorAll('.rig-widget .rig-btn');
+
+  const rigModes = {
+    skeleton: {
+      svg: `<svg width="450" height="250" viewBox="0 0 450 250">
+              <!-- Arm Mesh Outlined (Gray) -->
+              <path d="M 80 100 Q 150 90 220 120 Q 290 150 360 110 L 360 135 Q 290 175 220 145 Q 150 115 80 125 Z" fill="none" stroke="#666" stroke-width="2" stroke-dasharray="4,4"/>
+              <!-- Internal Bones and Joints -->
+              <g stroke="#ff9800" stroke-width="6" stroke-linecap="round">
+                <line x1="100" y1="112" x2="220" y2="132"/>
+                <line x1="220" y1="132" x2="340" y2="122"/>
+              </g>
+              <!-- Joints (Spheres) -->
+              <g fill="#ff5722" stroke="#fff" stroke-width="2">
+                <circle cx="100" cy="112" r="9"/><text x="85" y="85" fill="#ff9800" font-size="11">Shoulder Joint</text>
+                <circle cx="220" cy="132" r="9"/><text x="200" y="175" fill="#ff9800" font-size="11">Elbow Joint</text>
+                <circle cx="340" cy="122" r="7"/><text x="325" y="95" fill="#ff9800" font-size="11">Wrist Joint</text>
+              </g>
+            </svg>`,
+      text: "<strong>The Skeleton & Joints:</strong> Technical directors build an internal digital skeleton with joints placed at anatomical pivots. Without these, the mesh has no structure to bend around."
+    },
+    weights: {
+      svg: `<svg width="450" height="250" viewBox="0 0 450 250">
+              <!-- Heat Map Weight Painting on Arm Mesh -->
+              <g class="animating-arm">
+                <!-- Shoulder influence (Red/Hot) -->
+                <path d="M 80 100 L 170 105 L 170 140 L 80 125 Z" fill="#f44336" opacity="0.8"/>
+                <!-- Elbow transitional influence (Yellow/Green) -->
+                <path d="M 170 105 L 260 135 L 260 160 L 170 140 Z" fill="#ffeb3b" opacity="0.8"/>
+                <!-- Wrist influence (Blue/Cold) -->
+                <path d="M 260 135 L 360 110 L 360 135 L 260 160 Z" fill="#2196f3" opacity="0.8"/>
+              </g>
+              <!-- Joint nodes -->
+              <circle cx="100" cy="112" r="6" fill="#fff"/><circle cx="220" cy="132" r="6" fill="#fff"/>
+              <text x="225" y="45" fill="#ffeb3b" font-size="12" text-anchor="middle">Skinning & Weight Painting Heat Map</text>
+              <text x="225" y="210" fill="#aaa" font-size="11" text-anchor="middle">Red = 100% attached to Shoulder | Yellow = Shared | Blue = Attached to Wrist</text>
+            </svg>`,
+      text: "<strong>Skinning (Weight Painting):</strong> Artists paint influence weights (like a thermal heat map) to dictate how much neighboring bones pull the skin. Smooth weights prevent collapsing or pinching when joints bend."
+    },
+    controllers: {
+      svg: `<svg width="450" height="250" viewBox="0 0 450 250">
+              <!-- Arm Mesh -->
+              <path d="M 80 100 Q 150 90 220 120 Q 290 150 360 110 L 360 135 Q 290 175 220 145 Q 150 115 80 125 Z" fill="#37474f" stroke="#78909c" stroke-width="2"/>
+              <!-- External Rig Controllers (Handles & Curves) -->
+              <circle cx="340" cy="122" r="18" fill="none" stroke="#00e676" stroke-width="4" stroke-dasharray="3,3"/>
+              <text x="340" y="160" fill="#00e676" font-size="11" text-anchor="middle">IK Hand Controller</text>
+              
+              <circle cx="220" cy="132" r="14" fill="none" stroke="#00bcd4" stroke-width="3"/>
+              <text x="220" y="100" fill="#00bcd4" font-size="11" text-anchor="middle">Elbow Pole Vector</text>
+
+              <text x="225" y="225" fill="#fff" font-size="12" text-anchor="middle">Animators grab clean UI handles instead of wrestling raw bones!</text>
+            </svg>`,
+      text: "<strong>Controllers:</strong> Animators never pull raw internal bones directly. Riggers build clean external UI handles, sliders, and IK (Inverse Kinematics) targets so animators can easily pose characters intuitively."
+    }
+  };
+
+  function setRigMode(mode) {
+    buttons.forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    stage.innerHTML = rigModes[mode].svg;
+    desc.innerHTML = rigModes[mode].text;
+  }
+</script>
